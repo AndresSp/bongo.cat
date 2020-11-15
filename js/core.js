@@ -148,6 +148,8 @@ const LayersPerInstrumentEnum = Object.freeze({
 var pressed = [];
 var currentLayer;
 var allLayers = [];
+var auto = true;
+
 for (var tapKeysPerInstrument of Object.values(TapKeysPerLayerEnum)) {
   allLayers.push(...tapKeysPerInstrument);
 }
@@ -227,27 +229,66 @@ $.layers = function(selectedLayer) {
     }
   }
 }
-$(document).bind("contextmenu", function(e) {
-  e.preventDefault();
-});
-$(document).on("mousedown mouseup", function(e) {
-  if (!window.matchMedia("(max-width: 769px)").matches && !$(e.target).is("a, a *")) {
-    var keyboardEquivalent = ClickKeyEquivalentEnum[e.which];
-    if (keyboardEquivalent != undefined) {
-      var instrument = InstrumentPerKeyEnum[keyboardEquivalent.toUpperCase()];
-      var key = KeyEnum[keyboardEquivalent.toUpperCase()];
-      if (instrument != undefined && key != undefined) {
-        $.play(instrument, key, e.type === "mousedown");
-      }
-    }
+
+$(document).on("click","#autotoggle",function(e) {
+  auto = !auto
+  if(auto){
+    $("#autotoggle").html("Auto ON")
+  } else {
+    $("#autotoggle").html("Auto OFF")
   }
 });
+
+$(document).on("click","#play",function(e) {
+  const notes = $("#notes").val()
+
+  $("#autotoggle").prop('disabled', true);
+  $("#notes").prop('disabled', true);
+  $("#delay").prop('disabled', true);
+  $("#play").prop('disabled', true);
+  
+  for (let index = 0; index < notes.length; index++) {
+    setTimeout(function timer() {
+    var note = notes.charAt(index);
+    var instrument = InstrumentPerKeyEnum[note.toUpperCase()];
+    var key = KeyEnum[note.toUpperCase()];
+      if (instrument != undefined && key != undefined) {
+            $.play(instrument, key, true);
+            $.play(instrument, key, false);
+      }
+      if(index >= notes.length - 1){
+        $("#autotoggle").prop('disabled', false);
+        $("#notes").prop('disabled', false);
+        $("#delay").prop('disabled', false);
+        $("#play").prop('disabled', false);
+      }
+    }, index * $("#delay").val() * 1000);
+  }
+});
+
+// $(document).bind("contextmenu", function(e) {
+//   e.preventDefault();
+// });
+// $(document).on("mousedown mouseup", function(e) {
+//   if (!window.matchMedia("(max-width: 769px)").matches && !$(e.target).is("a, a *")) {
+//     var keyboardEquivalent = ClickKeyEquivalentEnum[e.which];
+//     if (keyboardEquivalent != undefined) {
+//       var instrument = InstrumentPerKeyEnum[keyboardEquivalent.toUpperCase()];
+//       var key = KeyEnum[keyboardEquivalent.toUpperCase()];
+//       if (instrument != undefined && key != undefined) {
+//         $.play(instrument, key, e.type === "mousedown");
+//       }
+//     }
+//   }
+// });
 $(document).on("keydown keyup", function(e) {
-  e.preventDefault();
-  var instrument = InstrumentPerKeyEnum[e.key.toUpperCase()];
-  var key = KeyEnum[e.key.toUpperCase()];
-  if (instrument != undefined && key != undefined) {
-    $.play(instrument, key, e.type === "keydown");
+  if(!auto){
+    e.preventDefault();
+    var instrument = InstrumentPerKeyEnum[e.key.toUpperCase()];
+    var key = KeyEnum[e.key.toUpperCase()];
+    if (instrument != undefined && key != undefined) {
+      $.play(instrument, key, e.type === "keydown");
+    }
   }
 });
 $(document).on("touchstart touchend", function(e) {
